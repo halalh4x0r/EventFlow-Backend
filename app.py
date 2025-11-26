@@ -104,7 +104,37 @@ class RsvpsResource(Resource):
         db.session.commit()
         return {"message": "RSVP deleted"}, 200
 
+# ---------------- COMMENTS ----------------
+class commentsResource(Resource):
 
+    def get(self):
+        comments = Comment.query.all()
+        return ([c.to_dict() for c in comments])
+
+    def post(self,id):
+        data = request.get_json()
+        comment = Comment(user_id=data.get("user_id"),
+                        event_id=data.get("event_id"),
+                        content=data.get("content"))
+        db.session.add(comment)
+        db.session.commit()
+        return (comment.to_dict()), 201
+
+
+    def patch(self,id):
+        comment = Comment.query.get_or_404(id)
+        data = request.get_json()
+        for field in ["user_id", "event_id", "content"]:
+            if field in data:
+                setattr(comment, field, data[field])
+        db.session.commit()
+        return (comment.to_dict())
+
+    def delete(self,id):
+        comment = Comment.query.get_or_404(id)
+        db.session.delete(comment)
+        db.session.commit()
+        return {"message": "Comment deleted"}, 200
 
 if __name__ == "__main__":
     app.run(debug=True)
