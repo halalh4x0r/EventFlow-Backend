@@ -29,7 +29,7 @@ class UserListResource(Resource):
         db.session.commit()
         return (user.to_dict()), 201
 
-    def patch(self):
+    def patch(self,id):
         user = User.query.get_or_404(id)
         data = request.get_json()
         if "username" in data:
@@ -39,7 +39,7 @@ class UserListResource(Resource):
         db.session.commit()
         return (user.to_dict())
 
-    def delete(self):
+    def delete(self,id):
         user = User.query.get_or_404(id)
         db.session.delete(user)
         db.session.commit()
@@ -47,13 +47,10 @@ class UserListResource(Resource):
 
 # ---------------- EVENTS ----------------
 class EventResource(Resource):
-    def get(self,id):
+    def get(self):
        events = Event.query.all()
        return([e.to_dict() for e in events]) 
-
-
-
-    def post():
+    def post(self):
         data = request.get_json()
         event = Event(
             title=data.get("title"),
@@ -65,7 +62,7 @@ class EventResource(Resource):
         db.session.add(event)
         db.session.commit()
         return(event.to_dict()), 201
-    def patch(id):
+    def patch(self,id):
         event = Event.query.get_or_404(id)
         data = request.get_json()
         for field in ["title", "description", "location", "start_time", "end_time"]:
@@ -73,11 +70,39 @@ class EventResource(Resource):
                 setattr(event, field, data[field])
         db.session.commit()
         return (event.to_dict())
-    def delete(id):
+    def delete(self,id):
         event = Event.query.get_or_404(id)
         db.session.delete(event)
         db.session.commit()
         return {"message": "Event deleted"}, 200
+
+# ---------------- RSVPS ----------------
+class RsvpsResource(Resource):
+
+    def get(self):
+        rsvps = RSVP.query.all()
+        return ([r.to_dict() for r in rsvps])
+
+    def post(self,id):
+        data = request.get_json()
+        rsvp = RSVP(user_id=data.get("user_id"), event_id=data.get("event_id"))
+        db.session.add(rsvp)
+        db.session.commit()
+        return (rsvp.to_dict()), 201
+
+    def patch(self,id):
+        rsvp = RSVP.query.get_or_404(id)
+        data = request.get_json()
+        for field in ["user_id", "event_id"]:
+            if field in data:
+                setattr(rsvp, field, data[field])
+        db.session.commit()
+        return (rsvp.to_dict())
+    def delete(self,id):
+        rsvp = RSVP.query.get_or_404(id)
+        db.session.delete(rsvp)
+        db.session.commit()
+        return {"message": "RSVP deleted"}, 200
 
 
 
