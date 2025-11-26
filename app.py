@@ -141,9 +141,9 @@ class CommentsResource(Resource):
         return {"message": "Comment deleted"}, 200
 
 #Registering  our resources. 
-api.add_resources(UserListResource,'/users')
-api.add_resources(UserListResource,'/events')
-api.add_resources(UserListResource,'/rsvps')
-api.add_resources(UserListResource,'/comments')
+api.add_resource(UserListResource,'/users')
+api.add_resource(EventResource,'/events')
+api.add_resource(RsvpsResource,'/rsvps')
+api.add_resource(CommentsResource,'/comments')
 if __name__ == "__main__":
     app.run(debug=True)
