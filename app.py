@@ -53,6 +53,33 @@ class EventResource(Resource):
 
 
 
+    def post():
+        data = request.get_json()
+        event = Event(
+            title=data.get("title"),
+            description=data.get("description"),
+            location=data.get("location"),
+            start_time=data.get("start_time"),
+            end_time=data.get("end_time"),
+        )
+        db.session.add(event)
+        db.session.commit()
+        return(event.to_dict()), 201
+    def patch(id):
+        event = Event.query.get_or_404(id)
+        data = request.get_json()
+        for field in ["title", "description", "location", "start_time", "end_time"]:
+            if field in data:
+                setattr(event, field, data[field])
+        db.session.commit()
+        return (event.to_dict())
+    def delete(id):
+        event = Event.query.get_or_404(id)
+        db.session.delete(event)
+        db.session.commit()
+        return {"message": "Event deleted"}, 200
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
