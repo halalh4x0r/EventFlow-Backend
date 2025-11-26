@@ -45,6 +45,14 @@ class UserListResource(Resource):
         db.session.commit()
         return {"message": "User deleted"}, 200
 
+# ---------------- EVENTS ----------------
+class EventResource(Resource):
+    def get(self,id):
+       events = Event.query.all()
+       return([e.to_dict() for e in events]) 
+
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
