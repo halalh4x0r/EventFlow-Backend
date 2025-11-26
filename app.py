@@ -2,12 +2,14 @@ from flask import Flask, jsonify, request
 from config import Config
 from models import db, User, Event, RSVP, Comment
 from flask_migrate import Migrate
+from flask_restful import Api, Resource
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 db.init_app(app)
 migrate = Migrate(app, db)
+api=Api(app)
 
 @app.route("/")
 def index():
