@@ -3,7 +3,8 @@ from config import Config
 from models import db, User, Event, RSVP, Comment
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
-form flask_cors import CORS
+from flask_cors import CORS
+
 app = Flask(__name__)
 app.config.from_object(Config)
 
