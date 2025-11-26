@@ -39,8 +39,11 @@ class UserListResource(Resource):
         db.session.commit()
         return (user.to_dict())
 
-
-
+    def delete(self):
+        user = User.query.get_or_404(id)
+        db.session.delete(user)
+        db.session.commit()
+        return {"message": "User deleted"}, 200
 
 
 if __name__ == "__main__":
