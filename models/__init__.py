@@ -1,6 +1,8 @@
-from config import db
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 from .user import User
 from .event import Event
-from .comment import Comment
 from .rsvp import RSVP
+from .comment import Comment
