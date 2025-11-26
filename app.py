@@ -24,7 +24,24 @@ class UserListResource(Resource):
         data=User.query.all()
         if not data.get("username") or not data.get("email"):
             return{"error":"username and email required"},400
+        user = User(username=data["username"], email=data["email"])
+        db.session.add(user)
+        db.session.commit()
+        return (user.to_dict()), 201
+
+    def patch(self):
+        user = User.query.get_or_404(id)
+        data = request.get_json()
+        if "username" in data:
+            user.username = data["username"]
+        if "email" in data:
+            user.email = data["email"]
+        db.session.commit()
+        return (user.to_dict())
 
 
 
 
+
+if __name__ == "__main__":
+    app.run(debug=True)
