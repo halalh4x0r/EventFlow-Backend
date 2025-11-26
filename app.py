@@ -9,27 +9,25 @@ app.config.from_object(Config)
 
 db.init_app(app)
 migrate = Migrate(app, db)
-api=Api(app)
-
+api = Api(app)
 
 
 # ---------------- USERS ----------------
 class UserListResource(Resource):
-
     def get(self):
         users = User.query.all()
-        return [ u.to_dict() for u in users], 200
+        return [u.to_dict() for u in users], 200
         
     def post(self):
-        data=User.query.all()
+        data = request.get_json()  # Get JSON data from the request
         if not data.get("username") or not data.get("email"):
-            return{"error":"username and email required"},400
+            return {"error": "username and email required"}, 400
         user = User(username=data["username"], email=data["email"])
         db.session.add(user)
         db.session.commit()
-        return (user.to_dict()), 201
+        return user.to_dict(), 201
 
-    def patch(self,id):
+    def patch(self, id):
         user = User.query.get_or_404(id)
         data = request.get_json()
         if "username" in data:
@@ -37,19 +35,21 @@ class UserListResource(Resource):
         if "email" in data:
             user.email = data["email"]
         db.session.commit()
-        return (user.to_dict())
+        return user.to_dict()
 
-    def delete(self,id):
+    def delete(self, id):
         user = User.query.get_or_404(id)
         db.session.delete(user)
         db.session.commit()
         return {"message": "User deleted"}, 200
 
+
 # ---------------- EVENTS ----------------
 class EventResource(Resource):
     def get(self):
-       events = Event.query.all()
-       return([e.to_dict() for e in events]) 
+        events = Event.query.all()
+        return [e.to_dict() for e in events], 200
+
     def post(self):
         data = request.get_json()
         event = Event(
@@ -61,80 +61,85 @@ class EventResource(Resource):
         )
         db.session.add(event)
         db.session.commit()
-        return(event.to_dict()), 201
-    def patch(self,id):
+        return event.to_dict(), 201
+
+    def patch(self, id):
         event = Event.query.get_or_404(id)
         data = request.get_json()
         for field in ["title", "description", "location", "start_time", "end_time"]:
             if field in data:
                 setattr(event, field, data[field])
         db.session.commit()
-        return (event.to_dict())
-    def delete(self,id):
+        return event.to_dict()
+
+    def delete(self, id):
         event = Event.query.get_or_404(id)
         db.session.delete(event)
         db.session.commit()
         return {"message": "Event deleted"}, 200
 
+
 # ---------------- RSVPS ----------------
 class RsvpsResource(Resource):
-
     def get(self):
         rsvps = RSVP.query.all()
-        return ([r.to_dict() for r in rsvps])
+        return [r.to_dict() for r in rsvps], 200
 
-    def post(self,id):
+    def post(self):
         data = request.get_json()
         rsvp = RSVP(user_id=data.get("user_id"), event_id=data.get("event_id"))
         db.session.add(rsvp)
         db.session.commit()
-        return (rsvp.to_dict()), 201
+        return rsvp.to_dict(), 201
 
-    def patch(self,id):
+    def patch(self, id):
         rsvp = RSVP.query.get_or_404(id)
         data = request.get_json()
         for field in ["user_id", "event_id"]:
             if field in data:
                 setattr(rsvp, field, data[field])
         db.session.commit()
-        return (rsvp.to_dict())
-    def delete(self,id):
+        return rsvp.to_dict()
+
+    def delete(self, id):
         rsvp = RSVP.query.get_or_404(id)
         db.session.delete(rsvp)
         db.session.commit()
         return {"message": "RSVP deleted"}, 200
 
-# ---------------- COMMENTS ----------------
-class commentsResource(Resource):
 
+# ---------------- COMMENTS ----------------
+class CommentsResource(Resource):
     def get(self):
         comments = Comment.query.all()
-        return ([c.to_dict() for c in comments])
+        return [c.to_dict() for c in comments], 200
 
-    def post(self,id):
+    def post(self):
         data = request.get_json()
-        comment = Comment(user_id=data.get("user_id"),
-                        event_id=data.get("event_id"),
-                        content=data.get("content"))
+        comment = Comment(
+            user_id=data.get("user_id"),
+            event_id=data.get("event_id"),
+            content=data.get("content"),
+        )
         db.session.add(comment)
         db.session.commit()
-        return (comment.to_dict()), 201
+        return comment.to_dict(), 201
 
-
-    def patch(self,id):
+    def patch(self, id):
         comment = Comment.query.get_or_404(id)
         data = request.get_json()
         for field in ["user_id", "event_id", "content"]:
             if field in data:
                 setattr(comment, field, data[field])
         db.session.commit()
-        return (comment.to_dict())
+        return comment.to_dict()
 
-    def delete(self,id):
+    def delete(self, id):
         comment = Comment.query.get_or_404(id)
         db.session.delete(comment)
         db.session.commit()
         return {"message": "Comment deleted"}, 200
+
 
 if __name__ == "__main__":
     app.run(debug=True)
