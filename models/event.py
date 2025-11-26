@@ -7,8 +7,8 @@ class Event(db.Model):
     title = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
     location = db.Column(db.String)
-    date = db.Column(db.String, nullable=False)
-
+    start_time = db.Column(db.String)  # or db.DateTime if you want datetime objects
+    end_time = db.Column(db.String)
     organizer_id = db.Column(db.Integer, db.ForeignKey("users.id"))
 
     # Relationships
@@ -22,6 +22,7 @@ class Event(db.Model):
             "title": self.title,
             "description": self.description,
             "location": self.location,
-            "date": self.date,
+            "start_time": self.start_time,
+            "end_time": self.end_time,
             "organizer_id": self.organizer_id
         }
