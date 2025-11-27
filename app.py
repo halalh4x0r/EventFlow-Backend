@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from config import Config
 from models import db, User, Event, RSVP, Comment
 from flask_migrate import Migrate
+from datetime import datetime
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -56,13 +57,17 @@ def get_events():
 @app.route("/events", methods=["POST"])
 def create_event():
     data = request.get_json()
+
     event = Event(
         title=data.get("title"),
         description=data.get("description"),
         location=data.get("location"),
-        start_time=data.get("start_time"),
-        end_time=data.get("end_time"),
+        start_time=datetime.fromisoformat(data.get("start_time")) if data.get("start_time") else None,
+        end_time=datetime.fromisoformat(data.get("end_time")) if data.get("end_time") else None,
+        organizer_id=data.get("organizer_id"),
+        images=data.get("images")  # make sure your Event model has an images column
     )
+
     db.session.add(event)
     db.session.commit()
     return jsonify(event.to_dict()), 201
