@@ -8,7 +8,12 @@ class User(db.Model):
     email = db.Column(db.String, unique=True, nullable=False)
 
     # Relationships
-    events = db.relationship("Event", back_populates="organizer", cascade="all, delete-orphan")
+    events = db.relationship(
+        "Event",
+        back_populates="organizer",
+        cascade="all, delete-orphan",
+        foreign_keys="Event.organizer_id"  # area added here
+    )
     rsvps = db.relationship("RSVP", back_populates="user", cascade="all, delete-orphan")
     comments = db.relationship("Comment", back_populates="user", cascade="all, delete-orphan")
 
