@@ -1,16 +1,16 @@
-"""initial
+"""Initial migration
 
-Revision ID: ad584e6bcb93
+Revision ID: 228a96faecde
 Revises: 
-Create Date: 2025-11-26 14:28:46.973398
+Create Date: 2025-11-27 15:20:09.643243
 
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import sqlite
 
 # revision identifiers, used by Alembic.
-revision = 'ad584e6bcb93'
+revision = '228a96faecde'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,16 +30,18 @@ def upgrade():
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('location', sa.String(), nullable=True),
-    sa.Column('date', sa.String(), nullable=False),
-    sa.Column('organizer_id', sa.Integer(), nullable=True),
+    sa.Column('start_time', sa.DateTime(), nullable=False),
+    sa.Column('end_time', sa.DateTime(), nullable=True),
+    sa.Column('organizer_id', sa.Integer(), nullable=False),
+    sa.Column('images', sqlite.JSON(), nullable=True),
     sa.ForeignKeyConstraint(['organizer_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('comments',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('text', sa.String(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('event_id', sa.Integer(), nullable=True),
+    sa.Column('content', sa.String(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('event_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['event_id'], ['events.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -47,8 +49,8 @@ def upgrade():
     op.create_table('rsvps',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('status', sa.String(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('event_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('event_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['event_id'], ['events.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
