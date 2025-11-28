@@ -54,13 +54,15 @@ class EventResource(Resource):
 
     def post(self):
         data = request.get_json()
-        event = Event(
-            title=data.get("title"),
-            description=data.get("description"),
-            location=data.get("location"),
-            start_time=data.get("start_time"),
-            end_time=data.get("end_time"),
-        )
+    event = Event(
+        title=data.get("title"),
+        description=data.get("description"),
+        location=data.get("location"),
+        start_time=datetime.fromisoformat(data.get("start_time")) if data.get("start_time") else None,
+        end_time=datetime.fromisoformat(data.get("end_time")) if data.get("end_time") else None,
+        organizer_id=data.get("organizer_id"),
+        images=data.get("images") 
+    )
         db.session.add(event)
         db.session.commit()
         return event.to_dict(), 201
@@ -79,46 +81,9 @@ class EventResource(Resource):
         db.session.delete(event)
         db.session.commit()
         return {"message": "Event deleted"}, 200
-
-@app.route("/events", methods=["GET"])
-def get_events():
-    events = Event.query.all()
-    return jsonify([e.to_dict() for e in events])
-
-@app.route("/events", methods=["POST"])
-def create_event():
-    data = request.get_json()
-
-    event = Event(
-        title=data.get("title"),
-        description=data.get("description"),
-        location=data.get("location"),
-        start_time=datetime.fromisoformat(data.get("start_time")) if data.get("start_time") else None,
-        end_time=datetime.fromisoformat(data.get("end_time")) if data.get("end_time") else None,
-        organizer_id=data.get("organizer_id"),
-        images=data.get("images")  # make sure your Event model has an images column
-    )
-
     db.session.add(event)
     db.session.commit()
-    return jsonify(event.to_dict()), 201
-
-@app.route("/events/<int:id>", methods=["PATCH"])
-def update_event(id):
-    event = Event.query.get_or_404(id)
-    data = request.get_json()
-    for field in ["title", "description", "location", "start_time", "end_time"]:
-        if field in data:
-            setattr(event, field, data[field])
-    db.session.commit()
-    return jsonify(event.to_dict())
-
-@app.route("/events/<int:id>", methods=["DELETE"])
-def delete_event(id):
-    event = Event.query.get_or_404(id)
-    db.session.delete(event)
-    db.session.commit()
-    return {"message": "Event deleted"}, 200
+    return event.to_dict(), 201
 
 # ---------------- RSVPS ----------------
 class RsvpsResource(Resource):
@@ -188,3 +153,4 @@ api.add_resource(RsvpsResource,'/rsvps')
 api.add_resource(CommentsResource,'/comments')
 if __name__ == "__main__":
     app.run(debug=True)
+
