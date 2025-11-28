@@ -61,8 +61,8 @@ class EventResource(Resource):
         start_time=datetime.fromisoformat(data.get("start_time")) if data.get("start_time") else None,
         end_time=datetime.fromisoformat(data.get("end_time")) if data.get("end_time") else None,
         organizer_id=data.get("organizer_id"),
-        images=data.get("images") 
-    )
+        images=data.get("images"))
+    
         db.session.add(event)
         db.session.commit()
         return event.to_dict(), 201
@@ -81,10 +81,6 @@ class EventResource(Resource):
         db.session.delete(event)
         db.session.commit()
         return {"message": "Event deleted"}, 200
-    db.session.add(event)
-    db.session.commit()
-    return event.to_dict(), 201
-
 # ---------------- RSVPS ----------------
 class RsvpsResource(Resource):
     def get(self):
@@ -153,4 +149,5 @@ api.add_resource(RsvpsResource,'/rsvps')
 api.add_resource(CommentsResource,'/comments')
 if __name__ == "__main__":
     app.run(debug=True)
+
 
