@@ -14,9 +14,7 @@ migrate = Migrate(app, db)
 api = Api(app)
 CORS(app)
 
-# ---------------------------------------
-# USERS RESOURCE
-# ---------------------------------------
+# ---------------- USERS ----------------
 class UserListResource(Resource):
     def get(self):
         users = User.query.all()
@@ -24,21 +22,19 @@ class UserListResource(Resource):
 
     def post(self):
         data = request.get_json()
-        if not data.get("username") or not data.get("email"):
-            return {"error": "username and email required"}, 400
-        
+        if not data.get("username") or not data.get("email") or not data.get("password"):
+            return {"error": "username, email, and password required"}, 400
         user = User(
             username=data.get("username"),
-            email=data.get("email")
+            email=data.get("email"),
+            password=data.get("password")
         )
         db.session.add(user)
         db.session.commit()
         return user.to_dict(), 201
 
 
-# ---------------------------------------
-# EVENTS RESOURCE (LIST + CREATE)
-# ---------------------------------------
+# ---------------- EVENTS ----------------
 class EventResource(Resource):
     def get(self):
         events = Event.query.all()
@@ -46,25 +42,19 @@ class EventResource(Resource):
 
     def post(self):
         data = request.get_json()
-
         event = Event(
             title=data.get("title"),
             description=data.get("description"),
             location=data.get("location"),
-            start_time=datetime.fromisoformat(data["start_time"]) if data.get("start_time") else None,
-            end_time=datetime.fromisoformat(data["end_time"]) if data.get("end_time") else None,
-            organizer_id=data.get("organizer_id"),
+            date_time=datetime.fromisoformat(data["date_time"]) if data.get("date_time") else None,
+            host_id=data.get("host_id"),
             images=data.get("images") or []
         )
-
         db.session.add(event)
         db.session.commit()
         return event.to_dict(), 201
 
 
-# ---------------------------------------
-# EVENT DETAIL RESOURCE
-# ---------------------------------------
 class EventDetailResource(Resource):
     def get(self, id):
         event = Event.query.get(id)
@@ -75,20 +65,16 @@ class EventDetailResource(Resource):
     def patch(self, id):
         event = Event.query.get_or_404(id)
         data = request.get_json()
-
         if "title" in data:
             event.title = data["title"]
         if "description" in data:
             event.description = data["description"]
         if "location" in data:
             event.location = data["location"]
-        if "start_time" in data:
-            event.start_time = datetime.fromisoformat(data["start_time"])
-        if "end_time" in data:
-            event.end_time = datetime.fromisoformat(data["end_time"])
+        if "date_time" in data:
+            event.date_time = datetime.fromisoformat(data["date_time"])
         if "images" in data:
             event.images = data["images"]
-
         db.session.commit()
         return event.to_dict(), 200
 
@@ -99,9 +85,7 @@ class EventDetailResource(Resource):
         return {"message": "Event deleted"}, 200
 
 
-# ---------------------------------------
-# RSVPS RESOURCE
-# ---------------------------------------
+# ---------------- RSVPS ----------------
 class RsvpsResource(Resource):
     def get(self):
         event_id = request.args.get("event_id")
@@ -138,9 +122,7 @@ class RsvpsResource(Resource):
         return {"message": "RSVP deleted"}, 200
 
 
-# ---------------------------------------
-# COMMENTS RESOURCE
-# ---------------------------------------
+# ---------------- COMMENTS ----------------
 class CommentsResource(Resource):
     def get(self):
         event_id = request.args.get("event_id")
@@ -155,8 +137,7 @@ class CommentsResource(Resource):
         comment = Comment(
             user_id=data.get("user_id"),
             event_id=data.get("event_id"),
-            content=data.get("content"),
-            created_at=datetime.utcnow()
+            content=data.get("content")
         )
         db.session.add(comment)
         db.session.commit()
@@ -178,31 +159,13 @@ class CommentsResource(Resource):
         return {"message": "Comment deleted"}, 200
 
 
-# ---------------------------------------
-# REGISTER RESTFUL ROUTES
-# ---------------------------------------
+# ---------------- REGISTER RESOURCES ----------------
 api.add_resource(UserListResource, '/users')
-
 api.add_resource(EventResource, '/events')
 api.add_resource(EventDetailResource, '/events/<int:id>')
-
-api.add_resource(
-    RsvpsResource,
-    '/rsvps',
-    '/rsvps/<int:id>',
-    '/rsvps/event/<int:event_id>'
-)
-
-api.add_resource(
-    CommentsResource,
-    '/comments',
-    '/comments/<int:id>',
-    '/comments/event/<int:event_id>'
-)
+api.add_resource(RsvpsResource, '/rsvps', '/rsvps/<int:id>')
+api.add_resource(CommentsResource, '/comments', '/comments/<int:id>')
 
 
-# ---------------------------------------
-# START APP
-# ---------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
