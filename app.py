@@ -1,157 +1,208 @@
-from flask import Flask, jsonify, request
-from config import Config
-from models import db, User, Event, RSVP, Comment
+from flask import Flask, request
+from flask_restful import Api, Resource
+from flask_cors import CORS
 from flask_migrate import Migrate
 from datetime import datetime
+from config import Config
+from models import db, User, Event, RSVP, Comment
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 db.init_app(app)
 migrate = Migrate(app, db)
+api = Api(app)
+CORS(app)
 
-@app.route("/")
-def index():
-    return {"message": "EventFlow API running..."}
+# ---------------------------------------
+# USERS RESOURCE
+# ---------------------------------------
+class UserListResource(Resource):
+    def get(self):
+        users = User.query.all()
+        return [u.to_dict() for u in users], 200
 
-# ---------------- USERS ----------------
-@app.route("/users", methods=["GET"])
-def get_users():
-    users = User.query.all()
-    return jsonify([u.to_dict() for u in users])
+    def post(self):
+        data = request.get_json()
+        if not data.get("username") or not data.get("email"):
+            return {"error": "username and email required"}, 400
+        
+        user = User(
+            username=data.get("username"),
+            email=data.get("email")
+        )
+        db.session.add(user)
+        db.session.commit()
+        return user.to_dict(), 201
 
-@app.route("/users", methods=["POST"])
-def create_user():
-    data = request.get_json()
-    if not data.get("username") or not data.get("email"):
-        return {"error": "username and email required"}, 400
-    user = User(username=data["username"], email=data["email"])
-    db.session.add(user)
-    db.session.commit()
-    return jsonify(user.to_dict()), 201
 
-@app.route("/users/<int:id>", methods=["PATCH"])
-def update_user(id):
-    user = User.query.get_or_404(id)
-    data = request.get_json()
-    if "username" in data:
-        user.username = data["username"]
-    if "email" in data:
-        user.email = data["email"]
-    db.session.commit()
-    return jsonify(user.to_dict())
+# ---------------------------------------
+# EVENTS RESOURCE (LIST + CREATE)
+# ---------------------------------------
+class EventResource(Resource):
+    def get(self):
+        events = Event.query.all()
+        return [e.to_dict() for e in events], 200
 
-@app.route("/users/<int:id>", methods=["DELETE"])
-def delete_user(id):
-    user = User.query.get_or_404(id)
-    db.session.delete(user)
-    db.session.commit()
-    return {"message": "User deleted"}, 200
+    def post(self):
+        data = request.get_json()
 
-# ---------------- EVENTS ----------------
-@app.route("/events", methods=["GET"])
-def get_events():
-    events = Event.query.all()
-    return jsonify([e.to_dict() for e in events])
+        event = Event(
+            title=data.get("title"),
+            description=data.get("description"),
+            location=data.get("location"),
+            start_time=datetime.fromisoformat(data["start_time"]) if data.get("start_time") else None,
+            end_time=datetime.fromisoformat(data["end_time"]) if data.get("end_time") else None,
+            organizer_id=data.get("organizer_id"),
+            images=data.get("images") or []
+        )
 
-@app.route("/events", methods=["POST"])
-def create_event():
-    data = request.get_json()
+        db.session.add(event)
+        db.session.commit()
+        return event.to_dict(), 201
 
-    event = Event(
-        title=data.get("title"),
-        description=data.get("description"),
-        location=data.get("location"),
-        start_time=datetime.fromisoformat(data.get("start_time")) if data.get("start_time") else None,
-        end_time=datetime.fromisoformat(data.get("end_time")) if data.get("end_time") else None,
-        organizer_id=data.get("organizer_id"),
-        images=data.get("images")  # make sure your Event model has an images column
-    )
 
-    db.session.add(event)
-    db.session.commit()
-    return jsonify(event.to_dict()), 201
+# ---------------------------------------
+# EVENT DETAIL RESOURCE
+# ---------------------------------------
+class EventDetailResource(Resource):
+    def get(self, id):
+        event = Event.query.get(id)
+        if not event:
+            return {"error": "Event not found"}, 404
+        return event.to_dict(), 200
 
-@app.route("/events/<int:id>", methods=["PATCH"])
-def update_event(id):
-    event = Event.query.get_or_404(id)
-    data = request.get_json()
-    for field in ["title", "description", "location", "start_time", "end_time"]:
-        if field in data:
-            setattr(event, field, data[field])
-    db.session.commit()
-    return jsonify(event.to_dict())
+    def patch(self, id):
+        event = Event.query.get_or_404(id)
+        data = request.get_json()
 
-@app.route("/events/<int:id>", methods=["DELETE"])
-def delete_event(id):
-    event = Event.query.get_or_404(id)
-    db.session.delete(event)
-    db.session.commit()
-    return {"message": "Event deleted"}, 200
+        if "title" in data:
+            event.title = data["title"]
+        if "description" in data:
+            event.description = data["description"]
+        if "location" in data:
+            event.location = data["location"]
+        if "start_time" in data:
+            event.start_time = datetime.fromisoformat(data["start_time"])
+        if "end_time" in data:
+            event.end_time = datetime.fromisoformat(data["end_time"])
+        if "images" in data:
+            event.images = data["images"]
 
-# ---------------- RSVPS ----------------
-@app.route("/rsvps", methods=["GET"])
-def get_rsvps():
-    rsvps = RSVP.query.all()
-    return jsonify([r.to_dict() for r in rsvps])
+        db.session.commit()
+        return event.to_dict(), 200
 
-@app.route("/rsvps", methods=["POST"])
-def create_rsvp():
-    data = request.get_json()
-    rsvp = RSVP(user_id=data.get("user_id"), event_id=data.get("event_id"))
-    db.session.add(rsvp)
-    db.session.commit()
-    return jsonify(rsvp.to_dict()), 201
+    def delete(self, id):
+        event = Event.query.get_or_404(id)
+        db.session.delete(event)
+        db.session.commit()
+        return {"message": "Event deleted"}, 200
 
-@app.route("/rsvps/<int:id>", methods=["PATCH"])
-def update_rsvp(id):
-    rsvp = RSVP.query.get_or_404(id)
-    data = request.get_json()
-    for field in ["user_id", "event_id"]:
-        if field in data:
-            setattr(rsvp, field, data[field])
-    db.session.commit()
-    return jsonify(rsvp.to_dict())
 
-@app.route("/rsvps/<int:id>", methods=["DELETE"])
-def delete_rsvp(id):
-    rsvp = RSVP.query.get_or_404(id)
-    db.session.delete(rsvp)
-    db.session.commit()
-    return {"message": "RSVP deleted"}, 200
+# ---------------------------------------
+# RSVPS RESOURCE
+# ---------------------------------------
+class RsvpsResource(Resource):
+    def get(self):
+        event_id = request.args.get("event_id")
+        if event_id:
+            rsvps = RSVP.query.filter_by(event_id=event_id).all()
+        else:
+            rsvps = RSVP.query.all()
+        return [r.to_dict() for r in rsvps], 200
 
-# ---------------- COMMENTS ----------------
-@app.route("/comments", methods=["GET"])
-def get_comments():
-    comments = Comment.query.all()
-    return jsonify([c.to_dict() for c in comments])
+    def post(self):
+        data = request.get_json()
+        rsvp = RSVP(
+            user_id=data.get("user_id"),
+            event_id=data.get("event_id"),
+            status=data.get("status", "pending")
+        )
+        db.session.add(rsvp)
+        db.session.commit()
+        return rsvp.to_dict(), 201
 
-@app.route("/comments", methods=["POST"])
-def create_comment():
-    data = request.get_json()
-    comment = Comment(user_id=data.get("user_id"),
-                      event_id=data.get("event_id"),
-                      content=data.get("content"))
-    db.session.add(comment)
-    db.session.commit()
-    return jsonify(comment.to_dict()), 201
+    def patch(self, id):
+        rsvp = RSVP.query.get_or_404(id)
+        data = request.get_json()
+        for field in ["user_id", "event_id", "status"]:
+            if field in data:
+                setattr(rsvp, field, data[field])
+        db.session.commit()
+        return rsvp.to_dict(), 200
 
-@app.route("/comments/<int:id>", methods=["PATCH"])
-def update_comment(id):
-    comment = Comment.query.get_or_404(id)
-    data = request.get_json()
-    for field in ["user_id", "event_id", "content"]:
-        if field in data:
-            setattr(comment, field, data[field])
-    db.session.commit()
-    return jsonify(comment.to_dict())
+    def delete(self, id):
+        rsvp = RSVP.query.get_or_404(id)
+        db.session.delete(rsvp)
+        db.session.commit()
+        return {"message": "RSVP deleted"}, 200
 
-@app.route("/comments/<int:id>", methods=["DELETE"])
-def delete_comment(id):
-    comment = Comment.query.get_or_404(id)
-    db.session.delete(comment)
-    db.session.commit()
-    return {"message": "Comment deleted"}, 200
 
+# ---------------------------------------
+# COMMENTS RESOURCE
+# ---------------------------------------
+class CommentsResource(Resource):
+    def get(self):
+        event_id = request.args.get("event_id")
+        if event_id:
+            comments = Comment.query.filter_by(event_id=event_id).all()
+        else:
+            comments = Comment.query.all()
+        return [c.to_dict() for c in comments], 200
+
+    def post(self):
+        data = request.get_json()
+        comment = Comment(
+            user_id=data.get("user_id"),
+            event_id=data.get("event_id"),
+            content=data.get("content"),
+            created_at=datetime.utcnow()
+        )
+        db.session.add(comment)
+        db.session.commit()
+        return comment.to_dict(), 201
+
+    def patch(self, id):
+        comment = Comment.query.get_or_404(id)
+        data = request.get_json()
+        for field in ["user_id", "event_id", "content"]:
+            if field in data:
+                setattr(comment, field, data[field])
+        db.session.commit()
+        return comment.to_dict(), 200
+
+    def delete(self, id):
+        comment = Comment.query.get_or_404(id)
+        db.session.delete(comment)
+        db.session.commit()
+        return {"message": "Comment deleted"}, 200
+
+
+# ---------------------------------------
+# REGISTER RESTFUL ROUTES
+# ---------------------------------------
+api.add_resource(UserListResource, '/users')
+
+api.add_resource(EventResource, '/events')
+api.add_resource(EventDetailResource, '/events/<int:id>')
+
+api.add_resource(
+    RsvpsResource,
+    '/rsvps',
+    '/rsvps/<int:id>',
+    '/rsvps/event/<int:event_id>'
+)
+
+api.add_resource(
+    CommentsResource,
+    '/comments',
+    '/comments/<int:id>',
+    '/comments/event/<int:event_id>'
+)
+
+
+# ---------------------------------------
+# START APP
+# ---------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)

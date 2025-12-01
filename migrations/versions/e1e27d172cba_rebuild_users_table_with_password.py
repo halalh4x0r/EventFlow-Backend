@@ -1,8 +1,8 @@
-"""Initial migration
+"""rebuild users table with password
 
-Revision ID: 228a96faecde
+Revision ID: e1e27d172cba
 Revises: 
-Create Date: 2025-11-27 15:20:09.643243
+Create Date: 2025-12-01 13:19:46.467481
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import sqlite
 
 # revision identifiers, used by Alembic.
-revision = '228a96faecde'
+revision = 'e1e27d172cba'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,6 +22,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
+    sa.Column('password', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -30,11 +31,10 @@ def upgrade():
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('location', sa.String(), nullable=True),
-    sa.Column('start_time', sa.DateTime(), nullable=False),
-    sa.Column('end_time', sa.DateTime(), nullable=True),
-    sa.Column('organizer_id', sa.Integer(), nullable=False),
+    sa.Column('date_time', sa.DateTime(), nullable=False),
+    sa.Column('host_id', sa.Integer(), nullable=False),
     sa.Column('images', sqlite.JSON(), nullable=True),
-    sa.ForeignKeyConstraint(['organizer_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['host_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('comments',
