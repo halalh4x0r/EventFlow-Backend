@@ -7,6 +7,7 @@ class Comment(db.Model):
     content = db.Column(db.String, nullable=False)  # this is required
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     event_id = db.Column(db.Integer, db.ForeignKey("events.id"), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     # Relationships
     user = db.relationship("User", back_populates="comments")
@@ -17,5 +18,6 @@ class Comment(db.Model):
             "id": self.id,
             "content": self.content,
             "user_id": self.user_id,
-            "event_id": self.event_id
+            "event_id": self.event_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
