@@ -56,33 +56,37 @@ class EventResource(Resource):
 
     def post(self):
         data = request.get_json()
-    event = Event(
-        title=data.get("title"),
-        description=data.get("description"),
-        location=data.get("location"),
-        start_time=datetime.fromisoformat(data.get("start_time")) if data.get("start_time") else None,
-        end_time=datetime.fromisoformat(data.get("end_time")) if data.get("end_time") else None,
-        organizer_id=data.get("organizer_id"),
-        images=data.get("images"))
-    
+        event = Event(
+            title=data.get("title"),
+            description=data.get("description"),
+            location=data.get("location"),
+            date_time=datetime.fromisoformat(data.get("date_time")) if data.get("date_time") else None,
+            host_id=data.get("host_id"),
+            images=data.get("images") or []
+        )
         db.session.add(event)
         db.session.commit()
         return event.to_dict(), 201
 
+class EventDetailResource(Resource):
     def patch(self, id):
         event = Event.query.get_or_404(id)
         data = request.get_json()
-        for field in ["title", "description", "location", "start_time", "end_time"]:
+        for field in ["title", "description", "location", "date_time", "images"]:
             if field in data:
-                setattr(event, field, data[field])
+                if field == "date_time":
+                    setattr(event, field, datetime.fromisoformat(data[field]))
+                else:
+                    setattr(event, field, data[field])
         db.session.commit()
-        return event.to_dict()
+        return event.to_dict(), 200
 
     def delete(self, id):
         event = Event.query.get_or_404(id)
         db.session.delete(event)
         db.session.commit()
         return {"message": "Event deleted"}, 200
+
 # ---------------- RSVPS ----------------
 class RsvpsResource(Resource):
     def get(self):
