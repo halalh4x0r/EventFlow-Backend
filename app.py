@@ -1,10 +1,12 @@
-from flask import Flask, jsonify, request
-from config import Config
-from models import db, User, Event, RSVP, Comment
+from flask import Flask, request
+from flask_restful import Api, Resource
+from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
 from datetime import datetime
+from config import Config
+from models import db, User, Event, RSVP, Comment
 
 app = Flask(__name__)
 app.config.from_object(Config)

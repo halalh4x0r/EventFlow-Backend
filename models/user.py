@@ -6,13 +6,13 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
-
+    password = db.Column(db.String, nullable=False)
     # Relationships
     events = db.relationship(
         "Event",
         back_populates="organizer",
         cascade="all, delete-orphan",
-        foreign_keys="Event.organizer_id"  # area added here
+        foreign_keys="Event.host_id"  # area added here
     )
     rsvps = db.relationship("RSVP", back_populates="user", cascade="all, delete-orphan")
     comments = db.relationship("Comment", back_populates="user", cascade="all, delete-orphan")
@@ -22,4 +22,6 @@ class User(db.Model):
             "id": self.id,
             "username": self.username,
             "email": self.email,
+            "password": self.password # NEVER return password
+
         }

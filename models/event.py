@@ -9,9 +9,8 @@ class Event(db.Model):
     title = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
     location = db.Column(db.String)
-    start_time = db.Column(db.DateTime, nullable=False)
-    end_time = db.Column(db.DateTime)
-    organizer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    date_time = db.Column(db.DateTime, nullable=False)
+    host_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     
     images = db.Column(JSON)  # <-- add this
 
@@ -19,7 +18,7 @@ class Event(db.Model):
     organizer = db.relationship(
         "User",
         back_populates="events",
-        foreign_keys=[organizer_id]
+        foreign_keys=[host_id]
     )
     rsvps = db.relationship("RSVP", back_populates="event", cascade="all, delete-orphan")
     comments = db.relationship("Comment", back_populates="event", cascade="all, delete-orphan")
@@ -30,8 +29,7 @@ class Event(db.Model):
             "title": self.title,
             "description": self.description,
             "location": self.location,
-            "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "organizer_id": self.organizer_id,
+            "date_time": self.date_time.isoformat() if self.date_time else None,
+            "host_id": self.host_id,
             "images": self.images or []  # return an empty list if None
         }
